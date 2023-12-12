@@ -1,8 +1,8 @@
 use clap::Parser;
-use conform::case::Case;
 use conform::report::{get_output, tap::Tap, Report};
 use conform::runner::Runner;
 use conform::stats::Stats;
+use conform::test_case::TestCase;
 use conform::{assert, ffi};
 use std::borrow::BorrowMut;
 use std::fs;
@@ -27,6 +27,24 @@ struct Conform {
 
     #[arg(long, help = "enforce recommended test", default_value_t = false)]
     enforce_recommended: bool,
+
+    #[arg(
+        long,
+        help = "where to write the stderr from runner. possible values are either `ignore` or a file path.",
+        default_value_t = String::from("ignore")
+    )]
+    runner_stderr: String,
+
+    #[arg(long, help = "environment variables for the runner.", value_parser)]
+    runner_env: Vec<String>,
+}
+
+fn parse_env(v: &String) -> (String, String) {
+    let mut kv = v.split("=").into_iter();
+    (
+        kv.next().expect("failed to parse --runner-env").to_string(),
+        kv.next().expect("").to_string(),
+    )
 }
 
 fn main() {
@@ -40,6 +58,11 @@ fn main() {
     let mut tap = Tap::new(get_output(&cli.output));
     let mut stats = Stats::new(cases_len);
 
+    runner.set_env_all(cli.runner_env.iter().map(parse_env).collect());
+    runner
+        .set_stderr(cli.runner_stderr)
+        .expect("failed to set stderr for the runner");
+
     tap.plan(0, cases_len);
     tap.diagnostic("conform - a better conformance test runner");
 
@@ -52,28 +75,23 @@ fn main() {
 
     for (pos, mut raw) in cases.iter_mut().borrow_mut().enumerate() {
         let num = pos as u32;
-        let case = Case::from(&mut raw);
+        let case = TestCase::from(&mut raw);
 
         let case_response = runner.send_case(&case);
 
         if case_response.is_err() {
             tap.not_ok(num, &case.name);
             tap.diagnostic(format!("{}", case_response.err().unwrap()));
-            stats.skipped += 1;
+            stats.failed += 1;
             break;
         }
 
-        let assertion =
-            assert::case(&case, &case_response.unwrap()).unwrap_or_else(|e| assert::CaseResult {
-                diagnostics: vec![e.to_string()],
-                passed: false,
-                skipped: false,
-            });
+        let assertion = assert::case::assert(&case, &case_response.unwrap());
 
-        if !assertion.passed {
+        if !assertion.passed() {
             tap.not_ok(num, &case.name);
-            tap.diagnostic(assertion.diagnostics.join("\n"));
             tap.diagnostic(format!("{}", case));
+            tap.diagnostic(format!("{}", assertion));
 
             stats.failed += 1;
             if cli.exit_early {

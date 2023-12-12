@@ -51,7 +51,7 @@ add_custom_command(
             --cpp_out=${protoc_cpp_args}${protobuf_SOURCE_DIR}/src
 )
 
-add_library(libconformance_common ${protobuf_SHARED_OR_STATIC}
+add_library(conformance_common ${protobuf_SHARED_OR_STATIC}
   ${protobuf_SOURCE_DIR}/conformance/conformance.pb.h
   ${protobuf_SOURCE_DIR}/conformance/conformance.pb.cc
   ${protobuf_SOURCE_DIR}/src/google/protobuf/test_messages_proto2.pb.h
@@ -69,68 +69,29 @@ add_library(libconformance_common ${protobuf_SHARED_OR_STATIC}
   ${protobuf_SOURCE_DIR}/conformance/text_format_conformance_suite.cc
   ${protobuf_SOURCE_DIR}/conformance/text_format_conformance_suite.h
 )
-target_link_libraries(libconformance_common
+target_link_libraries(conformance_common
   ${protobuf_LIB_PROTOBUF}
   ${protobuf_ABSL_USED_TARGETS}
 )
 if(protobuf_BUILD_SHARED_LIBS)
-  target_compile_definitions(libconformance_common
+  target_compile_definitions(conformance_common
     PUBLIC  PROTOBUF_USE_DLLS
     PRIVATE LIBPROTOBUF_TEST_EXPORTS)
 endif()
 
-add_executable(conformance_test_runner
-  ${protobuf_SOURCE_DIR}/conformance/conformance_test_main.cc
-)
-
-add_executable(conformance_cpp
-  ${protobuf_SOURCE_DIR}/conformance/conformance_cpp.cc
-)
-
 target_include_directories(
-  conformance_test_runner
+  conformance_common
   PUBLIC ${protobuf_SOURCE_DIR} ${protobuf_SOURCE_DIR}/conformance)
-
-target_include_directories(
-  libconformance_common
-  PUBLIC ${protobuf_SOURCE_DIR} ${protobuf_SOURCE_DIR}/conformance)
-
-target_include_directories(
-  conformance_cpp
-  PUBLIC ${protobuf_SOURCE_DIR})
-
-target_include_directories(conformance_test_runner PRIVATE ${ABSL_ROOT_DIR})
-target_include_directories(conformance_cpp PRIVATE ${ABSL_ROOT_DIR})
-
-target_link_libraries(conformance_test_runner
-  libconformance_common
-  ${protobuf_LIB_PROTOBUF}
-  ${protobuf_ABSL_USED_TARGETS}
-)
-target_link_libraries(conformance_cpp
-  libconformance_common
-  ${protobuf_LIB_PROTOBUF}
-  ${protobuf_ABSL_USED_TARGETS}
-)
-
-add_test(NAME conformance_cpp_test
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/conformance_test_runner
-    --failure_list ${protobuf_SOURCE_DIR}/conformance/failure_list_cpp.txt
-    --text_format_failure_list ${protobuf_SOURCE_DIR}/conformance/text_format_failure_list_cpp.txt
-    --output_dir ${protobuf_TEST_XML_OUTDIR}
-    --maximum_edition 2023
-    ${CMAKE_CURRENT_BINARY_DIR}/conformance_cpp
-  DEPENDS conformance_test_runner conformance_cpp)
 
 set(JSONCPP_WITH_TESTS OFF CACHE BOOL "Disable tests")
 if(protobuf_JSONCPP_PROVIDER STREQUAL "module")
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsoncpp third_party/jsoncpp)
-  target_include_directories(libconformance_common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsoncpp/include)
+  target_include_directories(conformance_common PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/jsoncpp/include)
   if(BUILD_SHARED_LIBS)
-    target_link_libraries(libconformance_common jsoncpp_lib)
+    target_link_libraries(conformance_common jsoncpp_lib)
   else()
-    target_link_libraries(libconformance_common jsoncpp_static)
+    target_link_libraries(conformance_common jsoncpp_static)
   endif()
 else()
-  target_link_libraries(libconformance_common jsoncpp)
+  target_link_libraries(conformance_common jsoncpp)
 endif()

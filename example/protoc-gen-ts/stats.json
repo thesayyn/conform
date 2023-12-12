@@ -1,7 +1,7 @@
 {
-  "total": 1615,
-  "passed": 1602,
+  "total": 2031,
+  "passed": 2011,
   "skipped": 0,
-  "failed": 3,
-  "percentile": 99.195045
+  "failed": 10,
+  "percentile": 99.01527
 }

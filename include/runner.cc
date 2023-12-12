@@ -27,4 +27,5 @@ void NoopRunner::RunTest(const std::string &name,
                          std::string *res)
 {
     unused(name, req, res);
+   // std::cout << name << std::endl;
 }

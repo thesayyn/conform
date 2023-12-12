@@ -50,7 +50,7 @@ fn main() {
     }
 
     println!("cargo:rustc-link-search=native={}/build/lib", cfg.display());
-    println!("cargo:rustc-link-lib=static=libconformance_common");
+    println!("cargo:rustc-link-lib=static=conformance_common");
     println!("cargo:rustc-link-search=native={}/lib", cfg.display());
     println!("cargo:rustc-link-lib=static=protobuf");
     println!("cargo:rustc-link-lib=static=jsoncpp");
