@@ -59,14 +59,16 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", &out_dir.to_string());
     println!("cargo:rustc-link-lib=conformance");
 
+    println!("cargo:warning={}", &out_dir.to_string());
+
     // Proto
     protobuf_codegen::Codegen::new()
         .protoc()
         .include("third_party/protobuf/conformance")
-        .include("third_party/protobuf/src/")
+        .include("include")
         .input("third_party/protobuf/conformance/conformance.proto")
-        .input("third_party/protobuf/src/google/protobuf/test_messages_proto3.proto")
-        .input("third_party/protobuf/src/google/protobuf/test_messages_proto2.proto")
+        .input("include/test_messages_proto3.proto")
+        .input("include/test_messages_proto2.proto")
         .cargo_out_dir("conformance")
         .run_from_script();
 }
